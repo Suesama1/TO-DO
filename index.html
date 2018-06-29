@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="./css/bootstrap/3.3.6/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/bootstrap/3.3.6/bootstrap-theme.css" rel="stylesheet">
+    <script src="./js/jquery/2.0.0/jquery.min.js"></script>
+    <style>
+        .done {
+            text-decoration: line-through;
+            color: #ff0000;
+        }
+    </style>
+</head>
+
+<body style="background-image:url(./image/index.jpg);background-size:cover">
+    <div id="app" class="container">
+        <div class="nav" style="margin-top:100px">
+            <div class="col-md-3" id="left" style="background-color:rgba(255,255,255,0.7);border-radius:5px;min-height:500px">
+                <ul class="nav nav-pills nav-stacked">
+                    <li>
+                        <a href="/out" style="font-size:25px">
+                            <img src="./image/head.jpg" style="border-radius:25px;width:50px;height:50px;margin-right:20px">sue
+                            <button type="button" class="btn pull-right" style="margin-top:10px">注销</button>
+                        </a>
+                    </li>
+                    <li v-for="list,index in lists" :class="{'active':selectedIndex===index}" @click="selectList(index)">
+                        <a href="#">{{list.lname}}
+                            <button type="button" class="btn pull-right" @click="deletelist(index)" style="margin-top: -7px" :disabled="index<=1">删除</button>
+                        </a>
+                    </li>
+                    <li><input type="text" class="form-control" v-model="listname" placeholder="+新建清单" @keyup.Enter="addList()"></li>
+                </ul>
+            </div>
+            <div class="col-md-9">
+                <div class="panel panel-primary" style="min-height:500px;background-color:rgba(255,255,255,0.7)" id="right">
+                    <div class="panel-heading">
+                        <button type="button" class="btn btn-primary pull-right" @click="change()">
+                            <span class="glyphicon glyphicon glyphicon-cog" style="font-size:20px"></span>
+                        </button>
+                        <button type="button" class="btn btn-primary pull-right" style="margin-right:5px" @click="show=!show">
+                            <span class="glyphicon glyphicon-eye-close" style="font-size:20px" v-if="show"></span>
+                            <span class="glyphicon glyphicon-eye-open" style="font-size:20px" v-else></span>
+                        </button>
+                        <div class="col-md-4 input-group">
+                            <span class="input-group-addon">
+                                    <span class="glyphicon glyphicon-search"></span>
+                            </span>
+                            <input type="text" class="form-control" style="height:40px" placeholder="搜索" v-model="searchname" @keyup.Enter="search(searchname)" @blur="isSearch=false;searchname=''">
+                        </div>
+                        <h3 class="panel-title " style="margin-top:50px;font-size:50px ">{{ message() }}</h3>
+                    </div>
+                    <div class="panel-body" style="font-size: 20px;color:orange;cursor: pointer;" v-if="!isSearch">
+                        <li style="height:40px" v-for="thing,index in lists[selectedIndex].things" :class="{'done':thing.done}" v-if="showDone(thing)">
+                            <span @click="finish(index)">{{thing.tname}}</span>
+                            <button type="button" class="btn btn-primary pull-right" @click="up(index)">上移</button>
+                            <button type="button" class="btn btn-primary pull-right" @click="deleteThing(index)">删除</button>
+                        </li>
+                        <li><input type="text" class="form-control " v-model="thingname " placeholder="+新建待办事项 " @keyup.Enter="addThing() "></li>
+                    </div>
+                    <div class="panel-body" style="font-size: 20px;cursor: pointer;" v-else>
+                        <li v-for="thing in searchThing">
+                            {{thing}}
+                        </li>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="./vue.js "></script>
+<script>
+    var app = new Vue({
+        el: "#app ",
+        data: {
+            listname: '',
+            lists: [{
+                lname: '我的一天',
+                things: []
+            }, {
+                lname: 'To-Do',
+                things: []
+            }],
+            searchThing: [],
+            selectedIndex: 0,
+            thingname: '',
+            class1: false,
+            show: true,
+            isSearch: false,
+            searchname: '',
+        },
+        methods: {
+            addList: function() {
+                var list = {
+                    lname: this.listname,
+                    things: []
+                };
+                this.lists.push(list);
+                this.listname = '';
+            },
+            addThing: function() {
+                var thing = {
+                    tname: this.thingname,
+                    done: false
+                }
+                this.lists[this.selectedIndex].things.push(thing);
+                this.thingname = '';
+            },
+            change: function() {
+                this.class1 = !this.class1;
+                var l = document.getElementById('left');
+                var r = document.getElementById('right');
+                if (this.class1) {
+                    l.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                } else {
+                    l.style.backgroundColor = 'rgba(255,255,255,0.7)';
+                }
+                if (this.class1) {
+                    r.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                } else {
+                    r.style.backgroundColor = 'rgba(255,255,255,0.7)';
+                }
+            },
+            message: function() {
+                if (this.selectedIndex > this.lists.length - 1)
+                    this.selectedIndex = this.lists.length - 1;
+                return this.lists[this.selectedIndex].lname;
+            },
+            selectList: function(index) {
+                this.selectedIndex = index;
+            },
+            finish: function(index) {
+                var done = this.lists[this.selectedIndex].things[index].done;
+                this.lists[this.selectedIndex].things[index].done = !done;
+            },
+            showDone: function(thing) {
+                return !thing.done || this.show;
+            },
+            search: function(searchname) {
+                this.isSearch = true;
+                this.searchThing.splice(0, this.searchThing.length);
+                for (list in this.lists) {
+                    var things = this.lists[list];
+                    for (thing in things.things) {
+                        var th = things.things[thing];
+                        if (th.tname.indexOf(searchname) != -1) {
+                            this.searchThing.push(th.tname);
+                        }
+                    }
+                }
+            },
+            up: function(index) {
+                this.lists[this.selectedIndex].things[index - 1] = this.lists[this.selectedIndex].things.splice(index, 1, this.lists[this.selectedIndex].things[index - 1])[0];
+            },
+            deletelist: function(index) {
+                this.lists.splice(index, 1);
+            },
+            deleteThing: function(index) {
+                this.lists[this.selectedIndex].things.splice(index, 1);
+            },
+        },
+        created() {
+            if (localStorage.getItem('listsBackup')) {
+                this.lists = JSON.parse(localStorage.getItem("listsBackup"));
+            }
+        },
+        updated() {
+            localStorage.setItem('listsBackup', JSON.stringify(this.lists));
+        },
+    });
+</script>
+
+</html>
